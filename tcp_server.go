@@ -12,7 +12,7 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	server, err := net.Listen("tcp", "172.17.0.4:8000")
+	server, err := net.Listen("tcp", "172.17.0.4:8080")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,14 +37,22 @@ func main() {
 						}
 						return // fra for løkke
 					}
-					dekryptertMelding := mycrypt.Krypter([]rune(string(buf[:n])), mycrypt.ALF_SEM03, len(mycrypt.ALF_SEM03)-4)
-					log.Println("Dekrypter melding: ", string(dekryptertMelding))
-					switch msg := string(dekryptertMelding); msg {
+					log.Println("Melding fra klient mottatt: ", string(buf[:n]))
+                                        decryptedMsg := mycrypt.Krypter([]rune(string(buf[:n])), mycrypt.ALF_SEM03, len(mycrypt.ALF_SEM03)-4)
+                                        log.Println("Melding fra klient dekryptert: ", string(decryptedMsg))
+
+					switch msg := string(decryptedMsg); msg {
 
   				        case "ping":
-						_, err = c.Write([]byte("pong"))
+					resp := mycrypt.Krypter([]rune("pong"), mycrypt.ALF_SEM03, 4)
+                                            log.Println("Svar: ", string(resp))
+                                            _, err = c.Write([]byte(string(resp)))
+
 					default:
-						_, err = c.Write(buf[:n])
+					resp := mycrypt.Krypter([]rune(string(decryptedMsg)), mycrypt.ALF_SEM03, 4)
+                                                log.Println("Svar: ", string(resp))
+                                                _, err = c.Write([]byte(string(resp)))
+
 					}
 					if err != nil {
 						if err != io.EOF {
